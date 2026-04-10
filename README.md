@@ -43,17 +43,9 @@ Run directly from the repo:
 cargo run -- run --config naenae.toml
 ```
 
-### Update
-
-After local changes:
-
-```bash
-cargo install --path .
-```
-
 ## Quick Start
 
-Create a config:
+Create a config (toml file):
 
 ```toml
 [discord]
@@ -101,9 +93,10 @@ an agent can help with that part.
 
 A practical workflow is:
 
+0. clone and install NaeNae 
 1. download or clone the repo for the tool you want to monitor
-2. give that repo to an agent
-3. ask the agent to inspect the tool's output patterns and write a `naenae` config
+2. give both repos to an agent
+3. ask the agent to inspect the tool's output patterns and write a `naenae` toml config
 4. run `naenae` with that config
 
 ## Minimal Config
