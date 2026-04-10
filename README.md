@@ -21,6 +21,12 @@ That part can be assisted by an agent: give the agent the downloaded repository 
 - Rust toolchain
 - a Discord webhook URL
 
+### Install From crates.io
+
+```bash
+cargo install naenae
+```
+
 ### Install From Source
 
 Clone the repo and install:
