@@ -1,0 +1,20 @@
+[discord]
+webhook_url = "https://discord.com/api/webhooks/your/webhook"
+bot_name = "NaeNae"
+
+[monitor]
+name = "fake-errors"
+
+[run]
+command = "bash"
+args = ["./examples/fake_errors.sh"]
+
+[[rules]]
+name = "warning"
+pattern = "(?i)warn|warning"
+cooldown_secs = 1
+
+[[rules]]
+name = "error"
+pattern = "(?i)error|failed|panic|traceback"
+cooldown_secs = 1

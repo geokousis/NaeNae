@@ -1,0 +1,15 @@
+[discord]
+webhook_url = "https://discord.com/api/webhooks/your/webhook"
+bot_name = "NaeNae"
+
+[monitor]
+name = "best-counter"
+
+[run]
+command = "bash"
+args = ["./examples/best_counter.sh"]
+
+[[rules]]
+name = "best"
+pattern = "Best=\\d+"
+cooldown_secs = 1

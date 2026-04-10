@@ -1,0 +1,15 @@
+[discord]
+webhook_url = "https://discord.com/api/webhooks/your/webhook"
+bot_name = "NaeNae"
+
+[monitor]
+name = "mixed-progress"
+
+[run]
+command = "bash"
+args = ["./examples/mixed_progress.sh"]
+
+[[rules]]
+name = "progress"
+patterns = ["Best=\\d+", "gain\\s*\\+?\\d+"]
+cooldown_secs = 1

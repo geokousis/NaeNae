@@ -1,0 +1,15 @@
+[discord]
+webhook_url = "https://discord.com/api/webhooks/your/webhook"
+bot_name = "NaeNae"
+
+[monitor]
+name = "slow-counter"
+
+[run]
+command = "bash"
+args = ["./examples/slow_counter.sh"]
+
+[[rules]]
+name = "numbers"
+pattern = "^[1-4]$"
+cooldown_secs = 1
