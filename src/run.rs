@@ -17,7 +17,9 @@ use crate::procfs::{
     AttachSource, discover_attach_sources, ensure_pid_owned_by_current_user, process_exists,
     process_label, sources_were_unavailable,
 };
-use crate::rules::{SharedState, StreamKind, compile_rules, process_line, read_stream};
+use crate::rules::{
+    CompiledRule, SharedState, StreamKind, compile_rules, process_line, read_stream,
+};
 
 pub async fn run_command_mode(
     config: Config,
@@ -55,22 +57,20 @@ pub async fn run_command_mode(
         config.discord.webhook_url.clone(),
         config.discord.bot_name.clone(),
     ));
-
-    if config.monitor.notify_on_start.unwrap_or(true) {
-        notifier
-            .send(&discord_message(
-                "Started",
-                &config.monitor.name,
-                &[format!(
-                    "command: `{}`",
-                    render_command(&run.command, &run.args)
-                )],
-            ))
-            .await?;
-    }
+    let compiled_rules = compile_rules(&config.rules)?;
+    let command_label = render_command(&run.command, &run.args);
 
     if use_pty {
-        return run_command_mode_pty(config, &run, notifier, state, quiet).await;
+        return run_command_mode_pty(
+            config,
+            &run,
+            notifier,
+            state,
+            quiet,
+            compiled_rules,
+            command_label,
+        )
+        .await;
     }
 
     let mut command = Command::new(&run.command);
@@ -82,9 +82,16 @@ pub async fn run_command_mode(
     command.stderr(std::process::Stdio::piped());
 
     let started_at = std::time::Instant::now();
-    let mut child = command
-        .spawn()
-        .with_context(|| format!("failed to spawn `{}`", run.command))?;
+    let mut child = match command.spawn() {
+        Ok(child) => child,
+        Err(err) => {
+            notify_spawn_failure(&config.monitor, &notifier, &command_label, &err.to_string())
+                .await;
+            return Err(err).with_context(|| format!("failed to spawn `{}`", run.command));
+        }
+    };
+
+    notify_run_started(&config.monitor, &notifier, &command_label).await;
 
     let stdout = child
         .stdout
@@ -95,7 +102,6 @@ pub async fn run_command_mode(
         .take()
         .ok_or_else(|| anyhow!("missing stderr pipe"))?;
 
-    let compiled_rules = compile_rules(&config.rules)?;
     let stdout_task = tokio::spawn(read_stream(
         stdout,
         StreamKind::Stdout,
@@ -125,7 +131,6 @@ pub async fn run_command_mode(
 
     let elapsed = started_at.elapsed();
     let exit_summary = ExitSummary::from_std(exit_status);
-    let command_label = render_command(&run.command, &run.args);
     finish_run_notification(&config.monitor, notifier, state, elapsed, exit_summary)
         .await
         .with_context(|| {
@@ -142,6 +147,8 @@ async fn run_command_mode_pty(
     notifier: Arc<Notifier>,
     state: Arc<Mutex<SharedState>>,
     quiet: bool,
+    compiled_rules: Vec<CompiledRule>,
+    command_label: String,
 ) -> Result<()> {
     let pty_system = native_pty_system();
     let pair = pty_system
@@ -161,11 +168,17 @@ async fn run_command_mode_pty(
         cmd.cwd(cwd);
     }
 
-    let mut child = pair
-        .slave
-        .spawn_command(cmd)
-        .with_context(|| format!("failed to spawn `{}` in PTY", run.command))?;
+    let mut child = match pair.slave.spawn_command(cmd) {
+        Ok(child) => child,
+        Err(err) => {
+            notify_spawn_failure(&config.monitor, &notifier, &command_label, &err.to_string())
+                .await;
+            return Err(err).with_context(|| format!("failed to spawn `{}` in PTY", run.command));
+        }
+    };
     drop(pair.slave);
+
+    notify_run_started(&config.monitor, &notifier, &command_label).await;
 
     let child_pid = child
         .process_id()
@@ -177,7 +190,6 @@ async fn run_command_mode_pty(
         .try_clone_reader()
         .context("failed to clone PTY reader")?;
 
-    let compiled_rules = compile_rules(&config.rules)?;
     let (tx, mut rx) = mpsc::channel::<String>(256);
     let read_task =
         tokio::task::spawn_blocking(move || read_pty_output_blocking(reader, tx, quiet));
@@ -306,6 +318,9 @@ pub async fn attach_mode(
     drop(state_guard);
 
     if config.monitor.notify_on_finish.unwrap_or(true) {
+        // Attach mode only observes that the target process disappeared.
+        // It does not have a reliable exit-status source, so this notification
+        // is "finished observing" rather than a guaranteed successful exit.
         let mut message = discord_message(
             "Finished",
             &config.monitor.name,
@@ -319,10 +334,9 @@ pub async fn attach_mode(
                 .monitor
                 .include_last_output_in_fail_message
                 .unwrap_or(true)
+            && let Some(line) = last_stderr.or(last_stdout)
         {
-            if let Some(line) = last_stderr.or(last_stdout) {
-                message.push_str(&format!("\nlast output: `{}`", truncate(&line, 300)));
-            }
+            message.push_str(&format!("\nlast output: `{}`", truncate(&line, 300)));
         }
         notifier.send(&message).await?;
     }
@@ -433,10 +447,10 @@ async fn finish_run_notification(
                 format!("exit: `{}`", code),
             ],
         );
-        if monitor.include_last_output_in_fail_message.unwrap_or(true) {
-            if let Some(line) = last_stderr.or(last_stdout) {
-                message.push_str(&format!("\nlast output: `{}`", truncate(&line, 300)));
-            }
+        if monitor.include_last_output_in_fail_message.unwrap_or(true)
+            && let Some(line) = last_stderr.or(last_stdout)
+        {
+            message.push_str(&format!("\nlast output: `{}`", truncate(&line, 300)));
         }
         notifier.send(&message).await?;
     }
@@ -523,4 +537,50 @@ fn read_pty_output_blocking(
     }
 
     Ok(())
+}
+
+async fn notify_run_started(
+    monitor: &MonitorConfig,
+    notifier: &Arc<Notifier>,
+    command_label: &str,
+) {
+    if !monitor.notify_on_start.unwrap_or(true) {
+        return;
+    }
+
+    if let Err(err) = notifier
+        .send(&discord_message(
+            "Started",
+            &monitor.name,
+            &[format!("command: `{command_label}`")],
+        ))
+        .await
+    {
+        eprintln!("warning: failed to send start notification: {err:#}");
+    }
+}
+
+async fn notify_spawn_failure(
+    monitor: &MonitorConfig,
+    notifier: &Arc<Notifier>,
+    command_label: &str,
+    error_message: &str,
+) {
+    if !monitor.notify_on_fail.unwrap_or(true) {
+        return;
+    }
+
+    if let Err(send_err) = notifier
+        .send(&discord_message(
+            "Failed",
+            &monitor.name,
+            &[
+                format!("command: `{command_label}`"),
+                format!("error: `{}`", truncate(error_message, 300)),
+            ],
+        ))
+        .await
+    {
+        eprintln!("warning: failed to send spawn failure notification: {send_err:#}");
+    }
 }

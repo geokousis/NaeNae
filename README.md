@@ -27,7 +27,7 @@ Clone the repo and install:
 
 ```bash
 git clone https://github.com/geokousis/NaeNae 
-cd naenae
+cd NaeNae
 cargo install --path .
 ```
 
@@ -70,6 +70,10 @@ Then run:
 ```bash
 naenae run --config naenae.toml
 ```
+
+This simple example uses a local shell loop, but `naenae` is usually most useful
+when you wrap external commands from another repo, training run, test harness,
+or long-running CLI tool.
 
 ## Why Minimal
 
@@ -168,11 +172,9 @@ naenae attach --config naenae.toml --pid 12345 --log-file /tmp/job.log
 
 ## Examples
 
-Example scripts and configs live under [examples/](/media/storage/kousis/work_2/naenae/examples).
+Detailed examples live in [examples/README.md](examples/README.md).
 
-### 1. Slow Counter
-
-Print `1`, `2`, `3`, `4` with a 5 second pause each time:
+The smallest example is still the slow counter:
 
 ```bash
 cp examples/slow_counter.toml /tmp/slow_counter.toml
@@ -180,59 +182,8 @@ cp examples/slow_counter.toml /tmp/slow_counter.toml
 naenae run --config /tmp/slow_counter.toml
 ```
 
-The example config sets `[run].cwd = "."`, so `naenae` resolves the script path relative to the config file location.
-
-Files:
-
-- [examples/slow_counter.sh](/media/storage/kousis/work_2/naenae/examples/slow_counter.sh)
-- [examples/slow_counter.toml](/media/storage/kousis/work_2/naenae/examples/slow_counter.toml)
-
-### 2. Fake Best Progress
-
-Simulate progress output like `Best=1`, `Best=2`, `Best=3`, `Best=4`:
-
-```bash
-cp examples/best_counter.toml /tmp/best_counter.toml
-# edit /tmp/best_counter.toml and add your Discord webhook
-naenae run --config /tmp/best_counter.toml
-```
-
-Files:
-
-- [examples/best_counter.sh](/media/storage/kousis/work_2/naenae/examples/best_counter.sh)
-- [examples/best_counter.toml](/media/storage/kousis/work_2/naenae/examples/best_counter.toml)
-
-### 3. Fake Errors
-
-Simulate warnings and errors:
-
-```bash
-cp examples/fake_errors.toml /tmp/fake_errors.toml
-# edit /tmp/fake_errors.toml and add your Discord webhook
-naenae run --config /tmp/fake_errors.toml
-```
-
-Files:
-
-- [examples/fake_errors.sh](/media/storage/kousis/work_2/naenae/examples/fake_errors.sh)
-- [examples/fake_errors.toml](/media/storage/kousis/work_2/naenae/examples/fake_errors.toml)
-
-### 4. Mixed Progress Demo
-
-Simulate `Best=` and `gain` on the same line:
-
-```bash
-cp examples/mixed_progress.toml /tmp/mixed_progress.toml
-# edit /tmp/mixed_progress.toml and add your Discord webhook
-naenae run --config /tmp/mixed_progress.toml
-```
-
-Files:
-
-- [examples/mixed_progress.sh](/media/storage/kousis/work_2/naenae/examples/mixed_progress.sh)
-- [examples/mixed_progress.toml](/media/storage/kousis/work_2/naenae/examples/mixed_progress.toml)
-
-If multiple rules match the same line, `naenae` sends one combined notification instead of spamming one notification per rule.
+For external tools, progress-style jobs, warning/error matching, and mixed rule
+examples, use the configs linked from [examples/README.md](examples/README.md).
 
 ## Streams
 
@@ -257,6 +208,11 @@ In that mode, `naenae` usually needs a readable output source, such as a log fil
 log_file = "/tmp/job.log"
 start_at_end = true
 ```
+
+`attach` is best-effort. It is useful for tailing output and regex matches from
+an existing process, but it does not have a reliable exit-status source, so its
+final notification means the process disappeared, not that it definitely exited
+successfully.
 
 You do not need `log_file` for normal `run` mode.
 

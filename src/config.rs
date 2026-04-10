@@ -73,12 +73,11 @@ pub async fn load_config(path: &PathBuf) -> Result<Config> {
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("."));
 
-    if let Some(run) = config.run.as_mut() {
-        if let Some(cwd) = run.cwd.as_mut() {
-            if cwd.is_relative() {
-                *cwd = config_dir.join(&*cwd);
-            }
-        }
+    if let Some(run) = config.run.as_mut()
+        && let Some(cwd) = run.cwd.as_mut()
+        && cwd.is_relative()
+    {
+        *cwd = config_dir.join(&*cwd);
     }
 
     Ok(config)

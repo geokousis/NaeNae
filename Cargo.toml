@@ -2,6 +2,15 @@
 name = "naenae"
 version = "0.1.0"
 edition = "2024"
+description = "Monitor external command output and send Discord webhook notifications."
+readme = "README.md"
+repository = "https://github.com/geokousis/NaeNae"
+homepage = "https://github.com/geokousis/NaeNae"
+documentation = "https://docs.rs/naenae"
+license = "MIT"
+keywords = ["cli", "monitoring", "discord", "regex", "automation"]
+categories = ["command-line-utilities", "development-tools"]
+exclude = [".codex", "target", "target/**"]
 
 [dependencies]
 anyhow = "1.0"

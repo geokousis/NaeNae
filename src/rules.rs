@@ -151,15 +151,15 @@ pub async fn process_line(
             }
 
             let rule_state = state.rules.entry(rule.name.clone()).or_default();
-            if let Some(max_notifications) = rule.max_notifications {
-                if rule_state.sent_count >= max_notifications {
-                    continue;
-                }
+            if let Some(max_notifications) = rule.max_notifications
+                && rule_state.sent_count >= max_notifications
+            {
+                continue;
             }
-            if let Some(last_sent_at) = rule_state.last_sent_at {
-                if last_sent_at.elapsed() < rule.cooldown {
-                    continue;
-                }
+            if let Some(last_sent_at) = rule_state.last_sent_at
+                && last_sent_at.elapsed() < rule.cooldown
+            {
+                continue;
             }
 
             rule_state.sent_count += 1;
