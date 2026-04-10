@@ -1,5 +1,5 @@
 # Nae^2
-![LOGO](/home/kousis/NaeNae/logo/Nae.png)
+![LOGO](logo/Nae.png)
 
 *it watches... naenae*
 
