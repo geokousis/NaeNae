@@ -12,7 +12,7 @@ It is useful when you want:
 - PTY behavior by default for terminal-sensitive tools
 
 `naenae` is intentionally minimal. It does not try to understand every tool or auto-infer the right regex rules for every project.
-That part can be assisted by an agent: give the agent the downloaded repository or the tool you want to monitor, and let it help you write a good `naenae` config for that specific tool.
+That part can be assisted by an agent: give the agent the downloaded repository or the tool you want to monitor and let it help you write a `naenae` config for that specific tool.
 
 ## Install
 
@@ -37,11 +37,6 @@ Build without installing:
 cargo build
 ```
 
-Run directly from the repo:
-
-```bash
-cargo run -- run --config naenae.toml
-```
 
 ## Quick Start
 
@@ -71,35 +66,11 @@ Then run:
 naenae run --config naenae.toml
 ```
 
-This simple example uses a local shell loop, but `naenae` is usually most useful
-when you wrap external commands from another repo, training run, test harness,
-or long-running CLI tool.
+A practical workflow if you are too bored to understand `naenae`:
 
-## Why Minimal
-
-`naenae` focuses on a small core:
-
-- run a command
-- capture output
-- match regex rules
-- send notifications
-
-That keeps the tool predictable and reusable across projects.
-
-If you need help figuring out:
-
-- which output lines matter
-- which regex rules to use
-- whether PTY is a good fit
-- how to monitor a specific repo or CLI
-
-an agent can help with that part.
-
-A practical workflow is:
-
-0. clone and install NaeNae 
-1. download or clone the repo for the tool you want to monitor
-2. give both repos to an agent
+0. clone/install NaeNae 
+1. download or clone the repo for the tool you want to monitor or a live output
+2. give both repos (our output of your tool of choice) to an agent
 3. ask the agent to inspect the tool's output patterns and write a `naenae` toml config
 4. run `naenae` with that config
 
@@ -152,7 +123,7 @@ Disable PTY:
 naenae run --config naenae.toml --no-pty
 ```
 
-Hide local output:
+Hide local tool output:
 
 ```bash
 naenae run --config naenae.toml --quiet
@@ -174,16 +145,11 @@ naenae attach --config naenae.toml --pid 12345 --log-file /tmp/job.log
 
 Detailed examples live in [examples/README.md](examples/README.md).
 
-The smallest example is still the slow counter:
-
 ```bash
 cp examples/slow_counter.toml /tmp/slow_counter.toml
 # edit /tmp/slow_counter.toml and add your Discord webhook
 naenae run --config /tmp/slow_counter.toml
 ```
-
-For external tools, progress-style jobs, warning/error matching, and mixed rule
-examples, use the configs linked from [examples/README.md](examples/README.md).
 
 ## Streams
 
