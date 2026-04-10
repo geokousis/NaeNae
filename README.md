@@ -1,11 +1,13 @@
-# NaeNae
+# Nae^2
 
-`naenae` wraps a command, watches its live output, matches regex rules, and sends Discord webhook notifications.
+*it watches... naenae*
+
+`naenae` wraps a command, watches its live output, matches regex rules and sends Discord webhook notifications.
 
 It is useful when you want:
 
 - start / finish / fail notifications
-- progress notifications from noisy CLI tools
+- progress notifications from CLI tools
 - live local output and Discord updates at the same time
 - PTY behavior by default for terminal-sensitive tools
 
@@ -267,5 +269,5 @@ You do not need `log_file` for normal `run` mode.
 
 - `--command` accepts a full shell-style command string
 - if the executable is already on `PATH`, use it directly
-- if not, use something like `python houdini.py design ...`
-- PTY mode is the default because many terminal tools behave differently without it
+- if not, use something like `python test.py test ...`
+- PTY mode is the default because many terminal test tools behave differently without it
