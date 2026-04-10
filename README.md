@@ -1,4 +1,4 @@
-<img src="logo/Nae.png" alt="LOGO_v2" width="360" />
+![LOGO_v2](logo/Nae.png)
 
 *it watches... naenae*
 
