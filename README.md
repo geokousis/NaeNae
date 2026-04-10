@@ -26,7 +26,7 @@ That part can be assisted by an agent: give the agent the downloaded repository 
 Clone the repo and install:
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/geokousis/NaeNae 
 cd naenae
 cargo install --path .
 ```
