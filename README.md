@@ -1,4 +1,3 @@
-# Nae^2
 ![LOGO_v2](logo/Nae.png)
 
 *it watches... naenae*
