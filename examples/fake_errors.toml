@@ -7,7 +7,8 @@ name = "fake-errors"
 
 [run]
 command = "bash"
-args = ["./examples/fake_errors.sh"]
+args = ["./fake_errors.sh"]
+cwd = "."
 
 [[rules]]
 name = "warning"

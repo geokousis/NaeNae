@@ -67,5 +67,19 @@ pub async fn load_config(path: &PathBuf) -> Result<Config> {
     let contents = fs::read_to_string(path)
         .await
         .with_context(|| format!("failed to read config at {}", path.display()))?;
-    toml::from_str(&contents).context("failed to parse TOML config")
+    let mut config: Config = toml::from_str(&contents).context("failed to parse TOML config")?;
+    let config_dir = path
+        .parent()
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("."));
+
+    if let Some(run) = config.run.as_mut() {
+        if let Some(cwd) = run.cwd.as_mut() {
+            if cwd.is_relative() {
+                *cwd = config_dir.join(&*cwd);
+            }
+        }
+    }
+
+    Ok(config)
 }

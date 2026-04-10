@@ -180,6 +180,8 @@ cp examples/slow_counter.toml /tmp/slow_counter.toml
 naenae run --config /tmp/slow_counter.toml
 ```
 
+The example config sets `[run].cwd = "."`, so `naenae` resolves the script path relative to the config file location.
+
 Files:
 
 - [examples/slow_counter.sh](/media/storage/kousis/work_2/naenae/examples/slow_counter.sh)
